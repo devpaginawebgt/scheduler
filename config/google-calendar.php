@@ -37,8 +37,13 @@ return [
      */
     'calendar_id' => env('GOOGLE_CALENDAR_ID'),
 
-     /*
+    /*
      *  The email address of the user account to impersonate.
      */
     'user_to_impersonate' => env('GOOGLE_CALENDAR_IMPERSONATE'),
+
+    /*
+     *  Fallback timezone used when the authenticated user has none set.
+     */
+    'default_timezone' => env('GOOGLE_CALENDAR_TIMEZONE', 'America/Guatemala'),
 ];
