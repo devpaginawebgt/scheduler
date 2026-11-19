@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessChatwootMessageJob;
 use App\Jobs\ProcessFlowSubmissionJob;
+use App\Models\BotConversation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -23,9 +24,13 @@ class ChatwootBotController extends Controller
             'content' => mb_substr($payload['content'] ?? '', 0, 100),
             'content_type' => $payload['content_type'] ?? null,
             'content_attributes' => $payload['content_attributes'] ?? null,
-            'conv_id' => $payload['conversation']['id'] ?? null,
+            'conv_id' => $payload['conversation']['id'] ?? $payload['id'] ?? null,
             'sender' => $payload['sender']['name'] ?? null,
         ]);
+
+        if (($payload['event'] ?? '') === 'conversation_opened') {
+            return $this->handleConversationOpened($payload);
+        }
 
         $skipReason = $this->skipReason($payload);
 
@@ -71,6 +76,28 @@ class ChatwootBotController extends Controller
         $request->attributes->set('_after_response', function () use ($chatwootConvId, $text, $phone, $name): void {
             ProcessChatwootMessageJob::dispatch($chatwootConvId, $text, $phone, $name);
         });
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function handleConversationOpened(array $payload): JsonResponse
+    {
+        $chatwootConvId = (int) ($payload['id'] ?? $payload['conversation']['id'] ?? 0);
+
+        Log::debug('Chatwoot conversation_opened', [
+            'conv_id' => $chatwootConvId,
+            'payload_keys' => array_keys($payload),
+        ]);
+
+        if ($chatwootConvId) {
+            $updated = BotConversation::where('chatwoot_conversation_id', $chatwootConvId)
+                ->where('state', 'bot')
+                ->update(['state' => 'handoff']);
+
+            if ($updated) {
+                Log::info('Chatwoot conversation_opened: bot handed off', ['conv_id' => $chatwootConvId]);
+            }
+        }
 
         return response()->json(['ok' => true]);
     }
