@@ -8,7 +8,7 @@ use Carbon\CarbonImmutable;
 class MockDisponibilidadService implements DisponibilidadServiceContract
 {
     /** Business hours: 09:00–18:00, lunch break 13:00–14:00, 60-min slots, Mon–Fri. */
-    private const SLOT_HOURS = [9, 10, 11, 12, 14, 15, 16, 17];
+    private const SLOT_HOURS = [8, 9, 10, 11, 12, 14, 15, 16, 17];
 
     /** Deterministic "occupied" slots: (weekday 1=Mon–5=Fri) => [hour, ...] */
     private const MOCK_BUSY = [

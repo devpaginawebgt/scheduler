@@ -1,6 +1,8 @@
 <?php
 
+use App\Contracts\DisponibilidadServiceContract;
 use App\Services\FlowCrypto;
+use App\Services\MockDisponibilidadService;
 use Carbon\Carbon;
 use Illuminate\Testing\TestResponse;
 use phpseclib3\Crypt\RSA;
@@ -106,6 +108,8 @@ function postFlow(array $payload, string $publicKeyPem, string $secret = 'test-s
 // ---------------------------------------------------------------------------
 
 beforeEach(function (): void {
+    $this->app->bind(DisponibilidadServiceContract::class, MockDisponibilidadService::class);
+
     [$this->privateKeyPem, $this->publicKeyPem, $this->tmpKeyPath] = generateTestKeyPair();
 
     config([

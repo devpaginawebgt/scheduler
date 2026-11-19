@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\DisponibilidadServiceContract;
-use App\Services\MockDisponibilidadService;
+use App\Services\GoogleDisponibilidadService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(DisponibilidadServiceContract::class, MockDisponibilidadService::class);
+        $this->app->bind(DisponibilidadServiceContract::class, GoogleDisponibilidadService::class);
     }
 
     /**
