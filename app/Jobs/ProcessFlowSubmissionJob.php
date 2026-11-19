@@ -111,7 +111,7 @@ class ProcessFlowSubmissionJob implements ShouldQueue
             return '¡Listo! Tu cita ha sido registrada. Gracias por agendar con nosotros, te esperamos.';
         }
 
-        $dateFmt = $dt->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY');
+        $dateFmt = $dt->locale('es')->isoFormat('dddd D [de] MMMM');
         $timeFmt = $this->formatTime($dt);
 
         return "¡Listo! Te esperamos el {$dateFmt} a las {$timeFmt}. Gracias por agendar tu cita con nosotros.";
