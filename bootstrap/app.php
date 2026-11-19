@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\RunAfterResponse;
+use App\Http\Middleware\VerifyChatwootSignature;
 use App\Http\Middleware\VerifyMetaSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,7 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['verify.meta.signature' => VerifyMetaSignature::class]);
+        $middleware->append(RunAfterResponse::class);
+        $middleware->alias([
+            'verify.meta.signature' => VerifyMetaSignature::class,
+            'verify.chatwoot.signature' => VerifyChatwootSignature::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
