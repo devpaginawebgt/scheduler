@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessChatwootMessageJob;
+use App\Jobs\ProcessFlowSubmissionJob;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -20,6 +21,8 @@ class ChatwootBotController extends Controller
             'message_type' => $payload['message_type'] ?? null,
             'private' => $payload['private'] ?? null,
             'content' => mb_substr($payload['content'] ?? '', 0, 100),
+            'content_type' => $payload['content_type'] ?? null,
+            'content_attributes' => $payload['content_attributes'] ?? null,
             'conv_id' => $payload['conversation']['id'] ?? null,
             'sender' => $payload['sender']['name'] ?? null,
         ]);
@@ -39,9 +42,25 @@ class ChatwootBotController extends Controller
         }
 
         $chatwootConvId = (int) ($payload['conversation']['id'] ?? 0);
-        $text = $payload['content'] ?? '';
         $phone = $payload['sender']['phone_number'] ?? '';
         $name = $payload['sender']['name'] ?? '';
+
+        $flowResponseJson = $payload['content_attributes']['whatsapp_flow_response']['response_json'] ?? null;
+
+        if (is_array($flowResponseJson)) {
+            Log::info('Chatwoot webhook dispatching flow submission job', [
+                'conv_id' => $chatwootConvId,
+                'sender' => $name,
+            ]);
+
+            $request->attributes->set('_after_response', function () use ($chatwootConvId, $phone, $name, $flowResponseJson): void {
+                ProcessFlowSubmissionJob::dispatch($chatwootConvId, $phone, $name, $flowResponseJson);
+            });
+
+            return response()->json(['ok' => true]);
+        }
+
+        $text = $payload['content'] ?? '';
 
         Log::info('Chatwoot webhook dispatching job', [
             'conv_id' => $chatwootConvId,
@@ -49,7 +68,6 @@ class ChatwootBotController extends Controller
             'content' => mb_substr($text, 0, 100),
         ]);
 
-        // El middleware RunAfterResponse ejecuta este callback DESPUÉS de enviar el 200.
         $request->attributes->set('_after_response', function () use ($chatwootConvId, $text, $phone, $name): void {
             ProcessChatwootMessageJob::dispatch($chatwootConvId, $text, $phone, $name);
         });

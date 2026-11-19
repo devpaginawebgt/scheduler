@@ -8,4 +8,5 @@ return [
     'phone_number_id' => env('META_PHONE_NUMBER_ID'),
     'access_token' => env('META_ACCESS_TOKEN'),
     'api_version' => env('META_API_VERSION', 'v21.0'),
+    'booking_host_email' => env('BOOKING_HOST_EMAIL', 'dev@paginawebguatemala.com'),
 ];
