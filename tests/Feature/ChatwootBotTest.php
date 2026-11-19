@@ -172,7 +172,6 @@ it('job sends flow button when category is agendar', function (): void {
     app()->instance(GeminiService::class, $gemini);
 
     $chatwoot = Mockery::mock(ChatwootApiService::class);
-    $chatwoot->shouldReceive('send')->once();
     $chatwoot->shouldReceive('sendFlowButton')->once();
     app()->instance(ChatwootApiService::class, $chatwoot);
 

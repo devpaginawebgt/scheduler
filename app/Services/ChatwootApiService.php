@@ -56,7 +56,7 @@ class ChatwootApiService
                 'type' => 'interactive',
                 'interactive' => [
                     'type' => 'flow',
-                    'body' => ['text' => 'Selecciona una fecha y hora para tu cita.'],
+                    'body' => ['text' => '¡Perfecto! Agendemos tu reunión. Completa tus datos y selecciona la fecha y hora que te queden mejor.'],
                     'action' => [
                         'name' => 'flow',
                         'parameters' => [
