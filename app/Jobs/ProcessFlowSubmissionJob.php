@@ -33,22 +33,25 @@ class ProcessFlowSubmissionJob implements ShouldQueue
             'name' => $this->name,
             'company' => $this->responseJson['empresa'] ?? null,
             'email' => $this->responseJson['correo'] ?? null,
-            'notes' => $this->responseJson['mensajes'] . " mensajes al día" ?? null,
+            'notes' => $this->responseJson['mensajes'].' mensajes al día' ?? null,
             'scheduled_at' => $scheduledAt,
         ]);
 
-        $this->createCalendarEvent($calendar, $appointment);
+        $eventLink = $this->createCalendarEvent($calendar, $appointment);
 
-        $message = $this->buildConfirmation((string) $scheduledAt);
+        $chatwoot->send($this->chatwootConvId, $this->buildConfirmation((string) $scheduledAt));
 
-        $chatwoot->send($this->chatwootConvId, $message);
+        if ($eventLink) {
+            $chatwoot->send($this->chatwootConvId, "Hemos enviado la invitación a la reunión a tu correo electrónico, y también te dejamos el link de acceso en este chat:\n{$eventLink}");
+        }
+
         $chatwoot->handoff($this->chatwootConvId, 'Appointment booked via Flow');
 
         BotConversation::where('chatwoot_conversation_id', $this->chatwootConvId)
             ->update(['state' => 'handoff']);
     }
 
-    private function createCalendarEvent(CalendarService $calendar, Appointment $appointment): void
+    private function createCalendarEvent(CalendarService $calendar, Appointment $appointment): ?string
     {
         try {
             $tz = config('whatsapp.flow_timezone', 'America/Guatemala');
@@ -60,22 +63,24 @@ class ProcessFlowSubmissionJob implements ShouldQueue
                 $attendees[] = $appointment->email;
             }
 
-            $description = $this->buildEventDescription($appointment);
-
-            $calendar->createEvent([
+            $event = $calendar->createEvent([
                 'title' => 'Reunión IA Conversacional - '.($appointment->company ?? $appointment->name),
                 'start' => $start,
                 'end' => $end,
-                'description' => $description,
+                'description' => $this->buildEventDescription($appointment),
                 'location' => null,
-                'meet' => false,
+                'meet' => true,
                 'attendees' => $attendees,
             ]);
+
+            return $event->googleEvent->getHangoutLink() ?? null;
         } catch (\Throwable $e) {
             Log::error('ProcessFlowSubmissionJob: failed to create calendar event', [
                 'appointment_id' => $appointment->id,
                 'error' => $e->getMessage(),
             ]);
+
+            return null;
         }
     }
 
